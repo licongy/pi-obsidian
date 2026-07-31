@@ -3,7 +3,7 @@
  *
  * Hand-written, dependency-free, runs inside Obsidian (Electron). Uses Node
  * built-ins (http, crypto, fs, path) to run a tiny RFC 6455 WebSocket server and
- * write a discovery lockfile. The pi side connects and exchanges JSON-RPC 2.0
+ * write a discovery lockfile. The Pi side connects and exchanges JSON-RPC 2.0
  * over the socket.
  *
  * This file must NOT `import "obsidian"` (ESM): Obsidian provides the `obsidian`
@@ -183,7 +183,7 @@ class BridgePanelView extends ItemView {
       "border:none;border-top:1px solid var(--background-modifier-border);margin:12px 0;";
 
     container.createEl("p", {
-      text: "Send a message to the pi agent:",
+      text: "Send a message to the Pi agent:",
       cls: "pi-obsidian-panel-hint",
     });
 
@@ -209,7 +209,7 @@ class BridgePanelView extends ItemView {
           action: "user_message",
           payload: { text },
         });
-        new Notice("Sent to pi agent", 2000);
+        new Notice("Sent to Pi agent", 2000);
         inputEl.value = "";
       }
     });
@@ -249,7 +249,7 @@ class PiObsidianBridgePlugin extends Plugin {
       });
     });
 
-    // Forward vault events to connected pi clients.
+    // Forward vault events to connected Pi clients.
     this._registerVaultEvent("create", "create");
     this._registerVaultEvent("modify", "modify");
     this._registerVaultEvent("delete", "delete");

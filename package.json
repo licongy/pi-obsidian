@@ -1,7 +1,7 @@
 {
   "name": "pi-obsidian",
   "version": "0.0.0",
-  "description": "A monorepo of independently-published pi extensions bridging the pi coding agent and Obsidian.",
+  "description": "A monorepo of independently-published Pi extensions bridging the Pi coding agent and Obsidian.",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -30,8 +30,8 @@
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish"
+    "version": "node scripts/check-clean.mjs && changeset version",
+    "release": "node scripts/check-clean.mjs && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.12",

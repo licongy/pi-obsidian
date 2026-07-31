@@ -4,12 +4,12 @@ Guidance for agents (and humans) working in this repo.
 
 ## Project
 
-Monorepo of independently-published pi extensions that bridge the pi coding agent
+Monorepo of independently-published Pi extensions that bridge the Pi coding agent
 and Obsidian. One publishable package per directory under `packages/*`. Each
-package publishes its `index.ts` **source** to npm (pi loads it via jiti, no
+package publishes its `index.ts` **source** to npm (Pi loads it via jiti, no
 compile step) so users can `pi install npm:<package-name>`.
 
-The flagship package is `@pi-obsidian/bridge`: infrastructure that lets the pi
+The flagship package is `@pi-obsidian/bridge`: infrastructure that lets the Pi
 agent read/write an Obsidian vault and call Obsidian plugin APIs via a file-based
 RPC bridge. See [`docs/bridge.md`](docs/bridge.md) for the full design and the
 bridge protocol — the protocol is the命门 and must be reviewed before code.
@@ -36,8 +36,8 @@ Per-package equivalents exist (e.g. `pnpm --filter @pi-obsidian/bridge typecheck
   extends it. `tsc` is used only for type-checking, not for emitting `dist/`.
 - Extension entry is `index.ts` exporting a default factory
   `(pi: ExtensionAPI) => void | Promise<void>`.
-- `pi.extensions` manifest points at the `.ts` source; pi loads it via jiti.
-- `@earendil-works/pi-coding-agent` is a peer dependency (provided by pi at
+- `pi.extensions` manifest points at the `.ts` source; Pi loads it via jiti.
+- `@earendil-works/pi-coding-agent` is a peer dependency (provided by Pi at
   runtime) and a dev dependency (for type-checking). It is imported as types
   only, so it never appears in published files.
 - Debug logging: every package vendors a `debug.ts` that prints to stderr when
@@ -48,11 +48,11 @@ Per-package equivalents exist (e.g. `pnpm --filter @pi-obsidian/bridge typecheck
 
 The `@pi-obsidian/bridge` package ships **two** runtime artifacts:
 
-1. **pi side** — `index.ts` (TypeScript source, loaded by jiti). Registers tools,
+1. **Pi side** — `index.ts` (TypeScript source, loaded by jiti). Registers tools,
    owns the bridge client, enforces security, probes liveness.
 2. **Obsidian side** — `obsidian-side/main.js` (plain hand-written JS, **no build
    step**) plus `obsidian-side/manifest.json`. This is a tiny Obsidian plugin that
-   the pi side injects into `.obsidian/plugins/pi-obsidian-bridge/` on first load;
+   the Pi side injects into `.obsidian/plugins/pi-obsidian-bridge/` on first load;
    the user enables it once. It is also publishable as an official Obsidian
    community plugin later.
 

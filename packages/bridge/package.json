@@ -1,7 +1,7 @@
 {
   "name": "@pi-obsidian/bridge",
-  "version": "0.1.0",
-  "description": "Bridge the pi coding agent to a resident Obsidian plugin over WebSocket: UI notifications, persistent widgets, plugin API calls, and event push.",
+  "version": "0.0.0",
+  "description": "Bridge the Pi coding agent to a resident Obsidian plugin over WebSocket: UI notifications, persistent widgets, plugin API calls, and event push.",
   "type": "module",
   "license": "MIT",
   "author": "pi-obsidian",

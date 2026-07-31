@@ -148,7 +148,7 @@ function registerStatusBarSet(pi: ExtensionAPI, bridge: BridgeClient): void {
       name: "obsidian.ui.status_bar.set",
       label: "Obsidian status bar item",
       description:
-        "Create or update a persistent named status bar item in Obsidian. The item survives across pi sessions and Obsidian reloads because the bridge plugin owns it. Use for live indicators like cost tracking, session status, or build state. Non-destructive.",
+        "Create or update a persistent named status bar item in Obsidian. The item survives across Pi sessions and Obsidian reloads because the bridge plugin owns it. Use for live indicators like cost tracking, session status, or build state. Non-destructive.",
       parameters: Type.Object({
         key: Type.String({
           description:

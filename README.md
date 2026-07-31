@@ -1,18 +1,18 @@
-# pi-obsidian
+# Pi-Obsidian
 
-A monorepo of independently-published [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) extensions that bridge the pi coding agent and [Obsidian](https://obsidian.md).
+A monorepo of independently-published [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) extensions that bridge the Pi coding agent and [Obsidian](https://obsidian.md).
 
 The flagship package is **`@pi-obsidian/bridge`** — infrastructure that lets the
-pi agent read/write an Obsidian vault and call Obsidian plugin APIs through a
-file-based RPC bridge. Control stays on the pi side; Obsidian acts as a
+Pi agent read/write an Obsidian vault and call Obsidian plugin APIs through a
+file-based RPC bridge. Control stays on the Pi side; Obsidian acts as a
 remote-controlled peripheral. See the [bridge design doc](docs/bridge.md) for the
 full architecture and protocol.
 
-Claudian-compatible but Claudian-independent: the bridge works in any pi run whose
+Claudian-compatible but Claudian-independent: the bridge works in any Pi run whose
 working directory is an Obsidian vault root.
 
 Each package lives in its own directory under `packages/*` and is published to npm
-as TypeScript source (pi loads it via jiti, no build step), so you can install only
+as TypeScript source (Pi loads it via jiti, no build step), so you can install only
 what you need:
 
 ```
@@ -23,7 +23,7 @@ pi install npm:<package-name>
 
 | Package                                 | Description                                                                                                   |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| [`@pi-obsidian/bridge`](docs/bridge.md) | _Planned._ Bridge the pi agent to an Obsidian vault: read/write notes, search, and call Obsidian plugin APIs. |
+| [`@pi-obsidian/bridge`](docs/bridge.md) | _Planned._ Bridge the Pi agent to an Obsidian vault: read/write notes, search, and call Obsidian plugin APIs. |
 
 ## Development
 

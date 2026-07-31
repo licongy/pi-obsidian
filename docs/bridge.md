@@ -7,7 +7,7 @@
 > **Scope repositioning (this revision).** The bridge is **not** primarily a
 > vault file reader/writer — that is a solved problem (Obsidian 1.12+ CLI and
 > packages such as `@bacnh85/pi-obsidian` already cover it). The bridge exists to
-> give the pi agent and third-party pi extensions a **stable, real-time, two-way
+> give the Pi agent and third-party Pi extensions a **stable, real-time, two-way
 > channel into a long-lived Obsidian plugin** that owns persistent UI and
 > Obsidian's in-process APIs. The differentiator is the **resident UI /
 > interaction platform**, the **generic, structured (non-`eval`) plugin call**,
@@ -17,16 +17,16 @@
 
 ## 1. Overview
 
-`@pi-obsidian/bridge` is a pi extension that gives the pi coding agent (and any
-other pi extension built on top) the ability to drive a **long-lived Obsidian
+`@pi-obsidian/bridge` is a Pi extension that gives the Pi coding agent (and any
+other Pi extension built on top) the ability to drive a **long-lived Obsidian
 plugin** over a **WebSocket RPC**: fire UI notifications, hold persistent
 status-bar widgets, open notes, run commands, push events back to pi, and — as a
 platform — call **any** Obsidian plugin API through a **structured, whitelisted
-proxy**. It is **infrastructure**: control stays on the pi side, persistent UI
+proxy**. It is **infrastructure**: control stays on the Pi side, persistent UI
 state and execution stay on the Obsidian side, and a WebSocket carrying JSON-RPC
 2.0 connects the two with no perceptible latency.
 
-The goal is to let anyone build **claudian → pi → obsidian** AI tooling on top of
+The goal is to let anyone build **Claudian → Pi → Obsidian** AI tooling on top of
 a stable bridge, and to expose Obsidian's in-process capabilities (UI, commands,
 Dataview, Tasks, vault events, …) to an agent that would otherwise be unable to
 reach them — including scenarios where the user is **not** at a terminal and
@@ -34,7 +34,7 @@ Claudian's own UI/UX does not provide an interaction surface.
 
 ### Why this architecture (not an Obsidian-internal AI plugin, not `eval`)
 
-Existing Obsidian AI plugins ship a _weak_ agent inside Obsidian. Existing pi →
+Existing Obsidian AI plugins ship a _weak_ agent inside Obsidian. Existing Pi →
 Obsidian packages reach the vault through the **Obsidian CLI + `eval`** — which
 is arbitrary in-process JS: enough for stateless one-shots (`new Notice(...)`),
 but structurally incapable of holding persistent UI across sessions, surviving
@@ -49,21 +49,21 @@ provide reachable.
 ### Three-layer architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Layer 3: Plugin-specific bridges (separate pi extensions)  │
-│  ├─ @pi-obsidian/dataview — registers obsidian.dataview_*   │
-│  ├─ @pi-obsidian/tasks — registers obsidian.tasks_*         │
+┌──────────────────────────────────────────────────────────────┐
+│  Layer 3: Plugin-specific bridges (separate Pi extensions)   │
+│  ├─ @pi-obsidian/dataview — registers obsidian.dataview_*    │
+│  ├─ @pi-obsidian/tasks — registers obsidian.tasks_*          │
 │  ├─ @pi-obsidian/cost-tracker — status-bar cost widget       │
-│  └─ ...other plugin bridges                                 │
-│     Use Layer 2's exported client helper; NOT this package  │
-├─────────────────────────────────────────────────────────────┤
-│  Layer 2: Generic bridge proxy (THIS PACKAGE)               │
-│  └─ Structured UI actions + obsidian.call_plugin            │
-│     + event channel + exports createBridgeClient()          │
-├─────────────────────────────────────────────────────────────┤
-│  Layer 1: Transport protocol (THIS PACKAGE)                 │
+│  └─ ...other plugin bridges                                  │
+│     Use Layer 2's exported client helper; NOT this package   │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 2: Generic bridge proxy (THIS PACKAGE)                │
+│  └─ Structured UI actions + obsidian.call_plugin             │
+│     + event channel + exports createBridgeClient()           │
+├──────────────────────────────────────────────────────────────┤
+│  Layer 1: Transport protocol (THIS PACKAGE)                  │
 │  └─ WebSocket + JSON-RPC 2.0, liveness, security, validation │
-└─────────────────────────────────────────────────────────────┘
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **This package implements Layer 1 and Layer 2 only.** Plugin-specific bridges
@@ -74,10 +74,10 @@ on top via the exported client helper.
 
 **Goals**
 
-- Provide a **real-time, two-way channel** (WebSocket) between pi and a
+- Provide a **real-time, two-way channel** (WebSocket) between Pi and a
   long-lived Obsidian plugin, with no perceptible latency and no reliance on
   Obsidian's file-watching for triggering.
-- Let the pi agent (and Layer 3 extensions) drive **persistent UI**: notices,
+- Let the Pi agent (and Layer 3 extensions) drive **persistent UI**: notices,
   status-bar widgets, opening notes, firing commands — state that survives
   `/new`, `/reload`, and Obsidian restarts because the plugin owns it.
 - Push **events from Obsidian back to pi** (vault changes, view actions, app
@@ -110,7 +110,7 @@ on top via the exported client helper.
 
 ## 3. Process model
 
-- **pi** runs as an independent Node process (the pi CLI). It is the **control
+- **pi** runs as an independent Node process (the Pi CLI). It is the **control
   plane**: tools are registered here, the agent loop runs here, permissions are
   enforced here.
 - **Obsidian** runs as an Electron app (the **execution plane**). A small
@@ -122,21 +122,21 @@ on top via the exported client helper.
   discovers it via a lockfile and connects.
 
 ```
- ┌─────────── pi process (Node) ───────────┐        ┌─────────── Obsidian (Electron) ──────────┐
- │  agent loop                             │        │  bridge plugin (onload → ws server up)    │
- │  tools: obsidian.ui.notify, …           │        │  handlers → app.vault / Notice / cmds      │
- │  ┌─────────────────────────────────┐    │  ws://  │  ┌──────────────────────────────────┐   │
- │  │ bridge client: JSON-RPC over WS  │ ────────►│  │ action dispatcher + UI holders    │   │
- │  └─────────────────────────────────┘    │ 127.0.  │  └──────────────────────────────────┘   │
- │       ▲  + event subscriber             │ 0.1     │        │  vault.on('modify') etc.         │
- │       └──── event (notification) ◄──────┼─────────┼────────┘  → event notification         │
- └─────────────────────────────────────────┘        └─────────────────────────────────────────┘
-            ▲                                          ▲
-            │ reads ws.lock on connect                  │ writes ws.lock on onload
+ ┌─────────── Pi process (Node) ───────────┐         ┌─────────── Obsidian (Electron) ──────────┐
+ │  agent loop                             │         │  bridge plugin (onload → ws server up)   │
+ │  tools: obsidian.ui.notify, …           │         │  handlers → app.vault / Notice / cmds    │
+ │  ┌─────────────────────────────────┐    │  ws://  │  ┌──────────────────────────────────┐    │
+ │  │ bridge client: JSON-RPC over WS │ ───────────► │  │  action dispatcher + UI holders  │    │
+ │  └─────────────────────────────────┘    │ 127.0.  │  └──────────────────────────────────┘    │
+ │       ▲  + event subscriber             │ 0.1     │        │  vault.on('modify') etc.        │
+ │       └──── event (notification) ◄──────┼─────────┼────────┘  → event notification           │
+ └─────────────────────────────────────────┘         └──────────────────────────────────────────┘
+            ▲                                            ▲
+            │ reads ws.lock on connect                   │ writes ws.lock on onload
             └──────── .pi/obsidian-bridge/ws.lock ───────┘
 ```
 
-`cwd` is the vault root (Claudian starts pi this way; any pi run inside a vault
+`cwd` is the vault root (Claudian starts Pi this way; any Pi run inside a vault
 does too). The lockfile lives under the vault root.
 
 ## 4. File layout
@@ -182,15 +182,15 @@ read by the bridge client only, never exposed to the agent.
   the WebSocket upgrade; mismatches are rejected before upgrade. The token is the
   `authToken` from `ws.lock`.
 - **Direction:** the same connection carries both pi→plugin requests and
-  plugin→pi event notifications (JSON-RPC notifications, no `id`).
+  plugin→Pi event notifications (JSON-RPC notifications, no `id`).
 
 ### 5.2 Handshake (`initialize`)
 
-pi connects and sends `initialize`; the plugin responds with its protocol
+Pi connects and sends `initialize`; the plugin responds with its protocol
 version and capabilities. This replaces the old `bridge-info.json` /
 `protocol-version` files.
 
-pi → plugin:
+Pi → plugin:
 
 ```json
 {
@@ -228,14 +228,14 @@ plugin → pi:
 }
 ```
 
-pi then sends `{"jsonrpc":"2.0","method":"notifications/initialized"}`.
+Pi then sends `{"jsonrpc":"2.0","method":"notifications/initialized"}`.
 
-- If the plugin advertises a different **major** `protocol`, pi closes the
+- If the plugin advertises a different **major** `protocol`, Pi closes the
   socket and fails tools with `BRIDGE_PROTOCOL_MISMATCH`.
 - `sessionId` is reserved for multi-session arbitration (Phase 2); v1 stores it
   on the connection but does not arbitrate.
 
-### 5.3 Request / response (pi → plugin)
+### 5.3 Request / response (Pi → plugin)
 
 Request (application action):
 
@@ -295,7 +295,7 @@ Event types (v1):
 | `vault_changed`   | `{ path, change: "create"\|"modify"\|"delete" }` | plugin's own `vault.on(...)`        |
 | `view_action`     | `{ viewType, action, payload }`                  | user interacting with a bridge view |
 | `app_state`       | `{ vault, online: boolean }`                     | Obsidian open/close, vault switch   |
-| `command_invoked` | `{ commandId }`                                  | a command pi subscribed to          |
+| `command_invoked` | `{ commandId }`                                  | a command Pi subscribed to          |
 
 The pi-side client exposes these as an `EventEmitter` (`bridge.on("vault_changed", ...)`),
 which Layer 3 extensions subscribe to (§12).
@@ -321,26 +321,26 @@ which Layer 3 extensions subscribe to (§12).
 
 1. **plugin `onload`** starts a loopback WS server on a free port and writes
    `ws.lock` atomically (tmp + `fs.rename`).
-2. **pi `onLoad`** reads `ws.lock` (poll for up to a short grace period if
+2. **Pi `onLoad`** reads `ws.lock` (poll for up to a short grace period if
    missing → otherwise `BRIDGE_DOWN`), connects with the auth header, and runs
    `initialize`.
-3. **Request path:** pi sends a JSON-RPC request; the plugin dispatches the
+3. **Request path:** Pi sends a JSON-RPC request; the plugin dispatches the
    action, executes it against Obsidian APIs, and returns the JSON-RPC response
    over the same socket.
 4. **Event path:** the plugin subscribes to Obsidian events at `onload` and
-   emits `event` notifications to pi whenever they fire.
-5. **plugin `onunload`** closes the server and deletes `ws.lock`. pi detects the
+   emits `event` notifications to Pi whenever they fire.
+5. **plugin `onunload`** closes the server and deletes `ws.lock`. Pi detects the
    closed connection and marks the bridge `BRIDGE_DOWN`.
-6. **pi session change** (`/new`, `/reload`): the client performs a **sticky
+6. **Pi session change** (`/new`, `/reload`): the client performs a **sticky
    reconnect** — it remembers the lockfile target and reconnects to the same
    plugin if the lockfile is still valid (pattern borrowed from `@ldelossa/pi-ide`).
 
 ### 5.7 Timeouts & orphans
 
-- pi enforces `timeoutMs` per request (default 30 s; UI actions typically use
-  < 1 s). On expiry pi fails the call with `BRIDGE_TIMEOUT`; a late response, if
+- Pi enforces `timeoutMs` per request (default 30 s; UI actions typically use
+  < 1 s). On expiry Pi fails the call with `BRIDGE_TIMEOUT`; a late response, if
   it arrives, is dropped by id match.
-- A dropped connection mid-request surfaces as `BRIDGE_DOWN`; pi does not retry
+- A dropped connection mid-request surfaces as `BRIDGE_DOWN`; Pi does not retry
   automatically except via the sticky-reconnect path on session change.
 
 ### 5.8 Atomicity
@@ -372,7 +372,7 @@ This is the central risk and must be designed deliberately.
    the `x-pi-obsidian-auth` header matching `ws.lock`'s random `authToken`. No
    remote interface is ever exposed.
 
-2. **Action whitelist.** Allowed actions are configurable (pi settings or the
+2. **Action whitelist.** Allowed actions are configurable (Pi settings or the
    package's `pi.bridge` config). v1 default = the UI actions + minimal vault
    ops; `call_plugin` is **off by default**. Anything not whitelisted →
    `ACTION_NOT_ALLOWED`, never executed.
@@ -403,7 +403,7 @@ This is the central risk and must be designed deliberately.
 
 ## 8. Action & tool set
 
-Each action maps 1:1 to a **pi tool** registered via `pi.registerTool()` (typebox
+Each action maps 1:1 to a **Pi tool** registered via `pi.registerTool()` (typebox
 params) when the LLM is expected to call it directly, and/or to a method on the
 **exported client** (§10.3) when Layer 3 code calls it programmatically. Tools
 are prefixed `obsidian.*`; client methods are grouped (`bridge.ui.*`,
@@ -423,7 +423,7 @@ state-holding, cross-session) and that no existing package offers.
 | `obsidian.ui.execute_command`  | `{ commandId, args? }`           | `{}`   | varies      | Fires `commands.executeCommandById`.                                       |
 
 The **persistent status-bar widget** is the canonical "eval cannot do this"
-case: the element is created once in `onload` and held by the plugin; pi only
+case: the element is created once in `onload` and held by the plugin; Pi only
 sends "set this text" updates. `eval`-based approaches stack a new element on
 every call and lose them on reload.
 
@@ -510,7 +510,7 @@ const dv = await bridge.call_plugin({
 - **Plugin id:** `pi-obsidian-bridge`. **Name:** "pi-obsidian bridge".
 - **Distribution (v1):** shipped inside the npm package at
   `obsidian-side/main.js` (plain hand-written JS, **no build step**, matching the
-  repo's source-first philosophy). The pi extension injects it on first load.
+  repo's source-first philosophy). The Pi extension injects it on first load.
 - **Injection:** on extension load, if
   `.obsidian/plugins/pi-obsidian-bridge/manifest.json` is missing, the extension
   writes `manifest.json` + `main.js` from package assets, then notifies the user
@@ -524,7 +524,7 @@ const dv = await bridge.call_plugin({
   "name": "pi-obsidian bridge",
   "version": "0.1.0",
   "minAppVersion": "1.4.0",
-  "description": "Bridge for pi coding agent to access Obsidian APIs over WebSocket",
+  "description": "Bridge for Pi coding agent to access Obsidian APIs over WebSocket",
   "author": "pi-obsidian",
   "isDesktopOnly": true
 }
@@ -658,7 +658,7 @@ rather than retry blindly.
 
 ## 11. Transparent proxy feasibility
 
-A key design question: can pi get a "virtual `app` object" that feels like
+A key design question: can Pi get a "virtual `app` object" that feels like
 programming inside Obsidian? The WS transport makes the proxyable subset
 **real-time**; serializability is the remaining constraint.
 
@@ -742,26 +742,26 @@ pi.registerTool({
 
 ## 13. Claudian integration
 
-Claudian is an Obsidian plugin that embeds pi in a sidebar.
+Claudian is an Obsidian plugin that embeds Pi in a sidebar.
 
-### 13.1 pi → Claudian (data sync)
+### 13.1 Pi → Claudian (data sync)
 
 Existing `@pi-claudian/*` extensions write to `.claudian/sessions/`; Claudian
 reads these on conversation open. The bridge's WS event channel can additionally
 push a `claudian-refresh`-style signal.
 
-### 13.2 Claudian → pi (commands)
+### 13.2 Claudian → Pi (commands)
 
-Claudian already sends commands to pi via JSONL stdio RPC (per-turn), independent
+Claudian already sends commands to Pi via JSONL stdio RPC (per-turn), independent
 of the bridge.
 
-### 13.3 pi → Claudian (UI notifications)
+### 13.3 Pi → Claudian (UI notifications)
 
 The bridge event channel (§5.4) carries push notifications. A co-resident
-Claudian (pi running inside Obsidian) can subscribe to the bridge's own events
+Claudian (Pi running inside Obsidian) can subscribe to the bridge's own events
 or the bridge can emit an `app_state`/custom event Claudian watches.
 
-> **Open question (§16):** when pi runs inside Obsidian via Claudian, pi and the
+> **Open question (§16):** when Pi runs inside Obsidian via Claudian, Pi and the
 > bridge plugin share a process; the loopback WS still works but is arguably
 > redundant. v1 keeps WS for a uniform control plane; a same-process fast path is
 > a future optimization.
@@ -773,9 +773,9 @@ or the bridge can emit an `app_state`/custom event Claudian watches.
 - Freeze protocol v1 in this PRD.
 - Obsidian plugin: `onload`, WS server, `ws.lock`, `initialize` handshake,
   heartbeat-free liveness, handle **`ping`** and **`ui.notify`** only.
-- pi side: inject plugin + connect + `initialize` + liveness + register
+- Pi side: inject plugin + connect + `initialize` + liveness + register
   **`obsidian.ping`** and **`obsidian.ui.notify`** only.
-- **Exit criteria:** a manual end-to-end round trip works (pi tool → WS → plugin
+- **Exit criteria:** a manual end-to-end round trip works (Pi tool → WS → plugin
   shows a Notice → response → pi). No whitelist/security hardening yet. Alpha tag
   only.
 
@@ -845,14 +845,14 @@ packages/cost-tracker/  # @pi-obsidian/cost-tracker — status-bar cost widget (
 
 ## 16. Open questions
 
-- **Concurrent sessions:** v1 assumes one pi session per connection. Multi-session
+- **Concurrent sessions:** v1 assumes one Pi session per connection. Multi-session
   arbitration (which session owns which requests/events) is deferred to Phase 2;
   `sessionId` is reserved.
-- **Claudian co-residence:** when pi runs inside Obsidian via Claudian, the
+- **Claudian co-residence:** when Pi runs inside Obsidian via Claudian, the
   loopback WS is arguably redundant (same process). v1 keeps it for a uniform
   control plane; a same-process fast path is a future optimization.
 - **Port conflicts / discovery:** the plugin binds a free port and advertises it
-  via `ws.lock`; pi follows. Multiple vaults each get their own plugin/port.
+  via `ws.lock`; Pi follows. Multiple vaults each get their own plugin/port.
   Reconnection backoff tuning is a Phase 2 concern.
 - **Daily-notes source:** core Daily Notes vs Periodic Notes — v1 reads core
   config, falls back to `YYYY-MM-DD.md`.
@@ -874,8 +874,8 @@ packages/cost-tracker/  # @pi-obsidian/cost-tracker — status-bar cost widget (
    added check.
 4. **Latency:** WS gives low, stable latency — adequate for interactive UI and
    event pushes. Bulk ops remain Phase 3 (batch/streaming).
-5. **Maintenance surface:** Obsidian-side plugin + protocol + pi client is a
-   larger long-term commitment than a typical pi extension — but WS + lockfile is
+5. **Maintenance surface:** Obsidian-side plugin + protocol + Pi client is a
+   larger long-term commitment than a typical Pi extension — but WS + lockfile is
    a well-trodden pattern (reused from pi-ide), reducing novel surface.
 
 ## 18. Success metrics (qualitative, v1)

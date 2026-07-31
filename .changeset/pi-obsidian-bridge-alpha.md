@@ -3,12 +3,12 @@
 ---
 
 Phase 1 release of the pi-obsidian bridge: a real-time WebSocket RPC between the
-pi agent and a resident Obsidian plugin.
+Pi agent and a resident Obsidian plugin.
 
 - **Full UI action set:** `ui.notify`, `ui.status_bar.set/clear` (persistent
   widgets the plugin owns), `ui.open_note`, `ui.execute_command`.
 - **Event channel:** `vault_changed`, `view_action`, `app_state` pushed from
-  Obsidian to pi in real time over the WebSocket.
+  Obsidian to Pi in real time over the WebSocket.
 - **Exported `createBridgeClient` helper:** typed one-line surface for Layer 3
   extensions (`bridge.ui.notify(...)`, `bridge.on("vault_changed", ...)`).
 - **Gated `call_plugin`:** structured, named, whitelisted alternative to `eval`
