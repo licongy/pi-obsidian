@@ -1,7 +1,7 @@
 {
   "id": "pi-obsidian-bridge",
   "name": "pi-obsidian bridge",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0",
   "minAppVersion": "1.4.0",
   "description": "Bridge for the pi coding agent to access Obsidian UI and APIs over WebSocket",
   "author": "pi-obsidian",

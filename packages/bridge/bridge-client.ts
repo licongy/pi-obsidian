@@ -1,10 +1,16 @@
 import { WebSocket } from "ws";
 import { EventEmitter } from "node:events";
 import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
+import nodePath from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { debug } from "./debug.js";
-import { CLIENT_VERSION, PROTOCOL_VERSION, type InitializeResult } from "./ws-protocol.js";
+import {
+  ACTIONS,
+  CLIENT_VERSION,
+  PROTOCOL_VERSION,
+  type BridgeEventType,
+  type InitializeResult,
+} from "./ws-protocol.js";
 
 export class BridgeError extends Error {
   readonly code: string;
@@ -17,15 +23,80 @@ export class BridgeError extends Error {
 
 export type BridgeStatus = "connecting" | "up" | "down";
 
-export type BridgeEventType = "vault_changed" | "view_action" | "app_state" | "command_invoked";
+/* ---- Action result shapes ---- */
+
+export interface PingResult {
+  pong: boolean;
+  server: string;
+  vault?: string;
+}
+
+export interface ReadNoteResult {
+  content: string;
+  stat: { size: number; mtime: number };
+  truncated?: boolean;
+}
+
+export interface WriteNoteResult {
+  path: string;
+  created: boolean;
+}
+
+export interface SearchMatch {
+  path: string;
+  score: number;
+  excerpt: string;
+}
+
+export interface SearchNotesResult {
+  matches: SearchMatch[];
+}
+
+export interface AppendDailyResult {
+  path: string;
+}
+
+export interface CallPluginResult {
+  result: unknown;
+}
+
+/* ---- Typed client surface ---- */
+
+export interface BridgeUI {
+  notify(message: string, timeoutMs?: number, type?: string): Promise<void>;
+  status_bar: {
+    set(key: string, text: string, cls?: string): Promise<void>;
+    clear(key: string): Promise<void>;
+  };
+  open_note(path: string, newLeaf?: boolean): Promise<void>;
+  execute_command(commandId: string, args?: unknown[]): Promise<void>;
+}
+
+export interface BridgeVault {
+  read_note(path: string, maxBytes?: number): Promise<ReadNoteResult>;
+  write_note(
+    path: string,
+    content: string,
+    opts?: { createFolders?: boolean },
+  ): Promise<WriteNoteResult>;
+  search_notes(query: string, limit?: number): Promise<SearchNotesResult>;
+  append_daily(content: string, format?: string): Promise<AppendDailyResult>;
+}
+
+export interface BridgeCallPluginParams {
+  pluginId: string;
+  method: string;
+  args?: unknown[];
+  timeoutMs?: number;
+}
 
 export interface BridgeClient {
   readonly status: BridgeStatus;
   readonly capabilities: readonly string[];
   request<T = unknown>(method: string, params?: unknown, timeoutMs?: number): Promise<T>;
-  ui: {
-    notify(message: string, timeoutMs?: number, type?: string): Promise<void>;
-  };
+  ui: BridgeUI;
+  vault: BridgeVault;
+  call_plugin(params: BridgeCallPluginParams): Promise<CallPluginResult>;
   on(event: BridgeEventType, handler: (payload: unknown) => void): void;
   off(event: BridgeEventType, handler: (payload: unknown) => void): void;
   reconnect(): void;
@@ -45,11 +116,11 @@ function resolveVaultRoot(start: string): string {
   let dir = start;
   for (;;) {
     try {
-      if (existsSync(path.join(dir, ".obsidian"))) return dir;
+      if (existsSync(nodePath.join(dir, ".obsidian"))) return dir;
     } catch {
       // ignore stat errors, keep walking up
     }
-    const parent = path.dirname(dir);
+    const parent = nodePath.dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
@@ -58,7 +129,7 @@ function resolveVaultRoot(start: string): string {
 
 export function createBridgeClient(_pi: ExtensionAPI): BridgeClient {
   const root = resolveVaultRoot(process.cwd());
-  const lockPath = path.join(root, ".pi", "obsidian-bridge", "ws.lock");
+  const lockPath = nodePath.join(root, ".pi", "obsidian-bridge", "ws.lock");
   const bus = new EventEmitter();
 
   let status: BridgeStatus = "down";
@@ -208,6 +279,55 @@ export function createBridgeClient(_pi: ExtensionAPI): BridgeClient {
 
   connect();
 
+  const ui: BridgeUI = {
+    notify(message, timeoutMs, type) {
+      return request(ACTIONS.UI_NOTIFY, { message, timeoutMs, type }, 5000).then(() => {
+        return;
+      });
+    },
+    status_bar: {
+      set(key, text, cls) {
+        return request(ACTIONS.UI_STATUS_BAR_SET, { key, text, cls }, 5000).then(() => {
+          return;
+        });
+      },
+      clear(key) {
+        return request(ACTIONS.UI_STATUS_BAR_CLEAR, { key }, 5000).then(() => {
+          return;
+        });
+      },
+    },
+    open_note(p, newLeaf) {
+      return request(ACTIONS.UI_OPEN_NOTE, { path: p, newLeaf }, 5000).then(() => {
+        return;
+      });
+    },
+    execute_command(commandId, args) {
+      return request(ACTIONS.UI_EXECUTE_COMMAND, { commandId, args }, 10000).then(() => {
+        return;
+      });
+    },
+  };
+
+  const vault: BridgeVault = {
+    read_note(p, maxBytes) {
+      return request<ReadNoteResult>(ACTIONS.READ_NOTE, { path: p, maxBytes });
+    },
+    write_note(p, content, opts) {
+      return request<WriteNoteResult>(ACTIONS.WRITE_NOTE, {
+        path: p,
+        content,
+        createFolders: opts?.createFolders ?? true,
+      });
+    },
+    search_notes(query, limit) {
+      return request<SearchNotesResult>(ACTIONS.SEARCH_NOTES, { query, limit });
+    },
+    append_daily(content, format) {
+      return request<AppendDailyResult>(ACTIONS.APPEND_DAILY, { content, format });
+    },
+  };
+
   const client: BridgeClient = {
     get status() {
       return status;
@@ -216,12 +336,14 @@ export function createBridgeClient(_pi: ExtensionAPI): BridgeClient {
       return capabilities;
     },
     request,
-    ui: {
-      notify(message, timeoutMs, type) {
-        return request("ui.notify", { message, timeoutMs, type }).then(() => {
-          return;
-        });
-      },
+    ui,
+    vault,
+    call_plugin(params) {
+      return request<CallPluginResult>(
+        ACTIONS.CALL_PLUGIN,
+        params,
+        params.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+      );
     },
     on(event, handler) {
       bus.on(event, handler);
