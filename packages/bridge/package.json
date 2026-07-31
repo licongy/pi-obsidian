@@ -1,0 +1,65 @@
+{
+  "name": "@pi-obsidian/bridge",
+  "version": "0.1.0-alpha.1",
+  "description": "Bridge the pi coding agent to a resident Obsidian plugin over WebSocket: UI notifications, persistent widgets, plugin API calls, and event push.",
+  "type": "module",
+  "license": "MIT",
+  "author": "pi-obsidian",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/licongy/pi-obsidian.git",
+    "directory": "packages/bridge"
+  },
+  "homepage": "https://github.com/licongy/pi-obsidian#readme",
+  "bugs": {
+    "url": "https://github.com/licongy/pi-obsidian/issues"
+  },
+  "keywords": [
+    "pi",
+    "obsidian",
+    "pi-extension",
+    "bridge",
+    "websocket",
+    "rpc"
+  ],
+  "files": [
+    "index.ts",
+    "bridge-client.ts",
+    "client.ts",
+    "ws-protocol.ts",
+    "config.ts",
+    "debug.ts",
+    "obsidian-side/main.js",
+    "obsidian-side/manifest.json"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./client": "./client.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=0.83.0",
+    "typebox": "^1.3.7"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.83.0",
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.5.0",
+    "obsidian": "^1.4.16",
+    "typebox": "^1.3.7",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

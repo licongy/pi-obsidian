@@ -7,4 +7,4 @@ packages:
 # run. Listing them here marks them as reviewed so install exits cleanly
 # (strictDepBuilds is on by default). `pnpm install` will append new candidates
 # here automatically for review if upstream deps change.
-allowBuilds: {}
+allowBuilds: { '@google/genai': set this to true or false, protobufjs: set this to true or false }

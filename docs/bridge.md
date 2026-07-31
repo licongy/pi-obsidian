@@ -12,7 +12,7 @@
 > Obsidian's in-process APIs. The differentiator is the **resident UI /
 > interaction platform**, the **generic, structured (non-`eval`) plugin call**,
 > and the **event push channel** — none of which any existing package provides.
-> Vault file ops are kept as an *optional, secondary* convenience, not the
+> Vault file ops are kept as an _optional, secondary_ convenience, not the
 > selling point.
 
 ## 1. Overview
@@ -194,7 +194,9 @@ pi → plugin:
 
 ```json
 {
-  "jsonrpc": "2.0", "id": 1, "method": "initialize",
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
   "params": { "protocol": 1, "client": "pi-bridge@0.1.0", "sessionId": "ses_01HMAAAAAAAA" }
 }
 ```
@@ -203,14 +205,25 @@ plugin → pi:
 
 ```json
 {
-  "jsonrpc": "2.0", "id": 1, "result": {
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
     "protocol": 1,
     "server": "pi-obsidian-bridge@0.1.0",
     "obsidianVersion": "1.7.5",
     "vault": "MyVault",
-    "capabilities": ["ui.notify", "ui.status_bar.set", "ui.status_bar.clear",
-                      "ui.open_note", "ui.execute_command", "read_note", "write_note",
-                      "search_notes", "append_daily", "call_plugin"]
+    "capabilities": [
+      "ui.notify",
+      "ui.status_bar.set",
+      "ui.status_bar.clear",
+      "ui.open_note",
+      "ui.execute_command",
+      "read_note",
+      "write_note",
+      "search_notes",
+      "append_daily",
+      "call_plugin"
+    ]
   }
 }
 ```
@@ -227,7 +240,12 @@ pi then sends `{"jsonrpc":"2.0","method":"notifications/initialized"}`.
 Request (application action):
 
 ```json
-{ "jsonrpc": "2.0", "id": 7, "method": "ui.notify", "params": { "message": "cost $5", "timeoutMs": 5000 } }
+{
+  "jsonrpc": "2.0",
+  "id": 7,
+  "method": "ui.notify",
+  "params": { "message": "cost $5", "timeoutMs": 5000 }
+}
 ```
 
 Success:
@@ -241,7 +259,9 @@ Failure (JSON-RPC `error`; `code` is a transport-level integer,
 
 ```json
 {
-  "jsonrpc": "2.0", "id": 7, "error": {
+  "jsonrpc": "2.0",
+  "id": 7,
+  "error": {
     "code": -32000,
     "message": "NOTE_NOT_FOUND: No note at Inbox/Missing.md",
     "data": { "code": "NOTE_NOT_FOUND" }
@@ -261,37 +281,41 @@ Failure (JSON-RPC `error`; `code` is a transport-level integer,
 Unsolicited pushes use JSON-RPC **notifications** (no `id`, no response):
 
 ```json
-{ "jsonrpc": "2.0", "method": "event", "params": { "type": "vault_changed", "payload": { "path": "Inbox/Note.md", "change": "modify" } } }
+{
+  "jsonrpc": "2.0",
+  "method": "event",
+  "params": { "type": "vault_changed", "payload": { "path": "Inbox/Note.md", "change": "modify" } }
+}
 ```
 
 Event types (v1):
 
-| `type`           | `payload`                                       | Source                              |
-| ---------------- | ----------------------------------------------- | ----------------------------------- |
-| `vault_changed`  | `{ path, change: "create"\|"modify"\|"delete" }` | plugin's own `vault.on(...)`        |
-| `view_action`    | `{ viewType, action, payload }`                 | user interacting with a bridge view |
-| `app_state`      | `{ vault, online: boolean }`                     | Obsidian open/close, vault switch   |
-| `command_invoked`| `{ commandId }`                                  | a command pi subscribed to          |
+| `type`            | `payload`                                        | Source                              |
+| ----------------- | ------------------------------------------------ | ----------------------------------- |
+| `vault_changed`   | `{ path, change: "create"\|"modify"\|"delete" }` | plugin's own `vault.on(...)`        |
+| `view_action`     | `{ viewType, action, payload }`                  | user interacting with a bridge view |
+| `app_state`       | `{ vault, online: boolean }`                     | Obsidian open/close, vault switch   |
+| `command_invoked` | `{ commandId }`                                  | a command pi subscribed to          |
 
 The pi-side client exposes these as an `EventEmitter` (`bridge.on("vault_changed", ...)`),
 which Layer 3 extensions subscribe to (§12).
 
 ### 5.5 Error codes (application mnemonics)
 
-| Code                     | Meaning                                                       |
-| ------------------------ | ------------------------------------------------------------- |
-| `BRIDGE_PROTOCOL_MISMATCH` | plugin advertised a different major protocol version        |
-| `BRIDGE_DOWN`             | no connection (lockfile missing / connect failed / closed)    |
-| `BRIDGE_TIMEOUT`          | pi-side deadline (`timeoutMs`) elapsed before a response      |
-| `ACTION_UNKNOWN`          | method is not a known action                                   |
-| `ACTION_NOT_ALLOWED`      | action not on the configured whitelist                        |
-| `NOTE_NOT_FOUND`          | `read_note`/`write_note` target missing (where relevant)       |
-| `PATH_INVALID`            | traversal (`..`) or absolute path                             |
-| `PATH_FORBIDDEN`          | path under `.pi/` or (default) `.obsidian/`                   |
-| `PLUGIN_NOT_FOUND`        | `call_plugin`: `pluginId` not loaded                          |
-| `METHOD_NOT_FOUND`        | `call_plugin`: method is not a function on the plugin API      |
-| `PLUGIN_CALLS_DISABLED`   | `call_plugin` not enabled in config                           |
-| `VIEW_TYPE_UNKNOWN`       | `ui.open_note`/view action: unknown view type                  |
+| Code                       | Meaning                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `BRIDGE_PROTOCOL_MISMATCH` | plugin advertised a different major protocol version       |
+| `BRIDGE_DOWN`              | no connection (lockfile missing / connect failed / closed) |
+| `BRIDGE_TIMEOUT`           | pi-side deadline (`timeoutMs`) elapsed before a response   |
+| `ACTION_UNKNOWN`           | method is not a known action                               |
+| `ACTION_NOT_ALLOWED`       | action not on the configured whitelist                     |
+| `NOTE_NOT_FOUND`           | `read_note`/`write_note` target missing (where relevant)   |
+| `PATH_INVALID`             | traversal (`..`) or absolute path                          |
+| `PATH_FORBIDDEN`           | path under `.pi/` or (default) `.obsidian/`                |
+| `PLUGIN_NOT_FOUND`         | `call_plugin`: `pluginId` not loaded                       |
+| `METHOD_NOT_FOUND`         | `call_plugin`: method is not a function on the plugin API  |
+| `PLUGIN_CALLS_DISABLED`    | `call_plugin` not enabled in config                        |
+| `VIEW_TYPE_UNKNOWN`        | `ui.open_note`/view action: unknown view type              |
 
 ### 5.6 Lifecycle
 
@@ -390,13 +414,13 @@ are prefixed `obsidian.*`; client methods are grouped (`bridge.ui.*`,
 These are the actions `eval` **cannot** reliably provide (persistent,
 state-holding, cross-session) and that no existing package offers.
 
-| Tool                      | params                                  | result | Destructive | Notes                                          |
-| ------------------------- | --------------------------------------- | ------ | ----------- | ---------------------------------------------- |
-| `obsidian.ui.notify`      | `{ message, timeoutMs?, type? }`        | `{}`   | no          | Fires an Obsidian `Notice`. Stateless one-shot. |
-| `obsidian.ui.status_bar.set` | `{ key, text, cls? }`                | `{}`   | no          | Creates-or-updates a **persistent** named status-bar item the plugin owns. |
-| `obsidian.ui.status_bar.clear` | `{ key }`                          | `{}`   | no          | Removes a named status-bar item.               |
-| `obsidian.ui.open_note`   | `{ path, newLeaf? }`                    | `{}`   | no          | Opens a note in a leaf via `workspace.openLinkText`. |
-| `obsidian.ui.execute_command` | `{ commandId, args? }`              | `{}`   | varies      | Fires `commands.executeCommandById`.            |
+| Tool                           | params                           | result | Destructive | Notes                                                                      |
+| ------------------------------ | -------------------------------- | ------ | ----------- | -------------------------------------------------------------------------- |
+| `obsidian.ui.notify`           | `{ message, timeoutMs?, type? }` | `{}`   | no          | Fires an Obsidian `Notice`. Stateless one-shot.                            |
+| `obsidian.ui.status_bar.set`   | `{ key, text, cls? }`            | `{}`   | no          | Creates-or-updates a **persistent** named status-bar item the plugin owns. |
+| `obsidian.ui.status_bar.clear` | `{ key }`                        | `{}`   | no          | Removes a named status-bar item.                                           |
+| `obsidian.ui.open_note`        | `{ path, newLeaf? }`             | `{}`   | no          | Opens a note in a leaf via `workspace.openLinkText`.                       |
+| `obsidian.ui.execute_command`  | `{ commandId, args? }`           | `{}`   | varies      | Fires `commands.executeCommandById`.                                       |
 
 The **persistent status-bar widget** is the canonical "eval cannot do this"
 case: the element is created once in `onload` and held by the plugin; pi only
@@ -419,7 +443,7 @@ competitor.**
 | ----------------------- | ----------------------------------- | ----------------------------------------- | ----------------- |
 | `obsidian.read_note`    | `{ path, maxBytes? }`               | `{ content, stat, truncated? }`           | no                |
 | `obsidian.write_note`   | `{ path, content, createFolders? }` | `{ path, created }`                       | **yes** (confirm) |
-| `obsidian.search_notes` | `{ query, limit? }`                 | `{ matches: [{ path, score, excerpt }] }`| no                |
+| `obsidian.search_notes` | `{ query, limit? }`                 | `{ matches: [{ path, score, excerpt }] }` | no                |
 | `obsidian.append_daily` | `{ content, format? }`              | `{ path }`                                | **yes** (confirm) |
 
 - `read_note` includes `maxBytes` to bound context; `truncated: true` if cut.
@@ -461,7 +485,11 @@ JSON-serializable.
 Example (Layer 3 code):
 
 ```typescript
-const dv = await bridge.call_plugin({ pluginId: "dataview", method: "query", args: ["TABLE file.name FROM #project"] });
+const dv = await bridge.call_plugin({
+  pluginId: "dataview",
+  method: "query",
+  args: ["TABLE file.name FROM #project"],
+});
 ```
 
 ### 8.4 Future actions (not v1)
@@ -575,10 +603,12 @@ import { createBridgeClient } from "@pi-obsidian/bridge/client";
 export default (pi) => {
   const bridge = createBridgeClient(pi);
   pi.on("turn:end", async (e) => {
-    await bridge.ui.notify(`cost $${e.cost}`);            // one line, typed
-    bridge.ui.status_bar.set("cost", `$${e.cost}`);        // persistent widget
+    await bridge.ui.notify(`cost $${e.cost}`); // one line, typed
+    bridge.ui.status_bar.set("cost", `$${e.cost}`); // persistent widget
   });
-  bridge.on("vault_changed", (e) => { /* react in real time */ });
+  bridge.on("vault_changed", (e) => {
+    /* react in real time */
+  });
 };
 ```
 
@@ -634,35 +664,35 @@ programming inside Obsidian? The WS transport makes the proxyable subset
 
 ### 11.1 Fully proxyable (JSON-serializable, request/response over WS)
 
-| API | Mechanism |
-|-----|-----------|
-| `vault.read/create/modify/delete/rename` | WS RPC |
-| `vault.getMarkdownFiles/getAllLoadedFiles` | Return path arrays |
-| `metadataCache.getFileCache/getCache` | Return `CachedMetadata` JSON |
-| `metadataCache.resolvedLinks/unresolvedLinks` | Return plain objects |
-| `workspace.getActiveFile/getLastOpenFiles` | Return paths |
-| `commands.executeCommandById` | `ui.execute_command` |
-| `app.isDarkMode/loadLocalStorage` | Simple values |
-| UI notices / status-bar / open-note | `ui.*` actions (persistent) |
+| API                                           | Mechanism                    |
+| --------------------------------------------- | ---------------------------- |
+| `vault.read/create/modify/delete/rename`      | WS RPC                       |
+| `vault.getMarkdownFiles/getAllLoadedFiles`    | Return path arrays           |
+| `metadataCache.getFileCache/getCache`         | Return `CachedMetadata` JSON |
+| `metadataCache.resolvedLinks/unresolvedLinks` | Return plain objects         |
+| `workspace.getActiveFile/getLastOpenFiles`    | Return paths                 |
+| `commands.executeCommandById`                 | `ui.execute_command`         |
+| `app.isDarkMode/loadLocalStorage`             | Simple values                |
+| UI notices / status-bar / open-note           | `ui.*` actions (persistent)  |
 
 ### 11.2 Proxyable with caveats
 
-| API | Caveat |
-|-----|--------|
-| `vault.on('create'/'modify'/'delete')` | Now reliable **forwarded as events** over WS (originates inside Obsidian, where the watcher *is* reliable; the unreliable case was external writes, which the bridge no longer depends on) |
-| `metadataCache.on('changed')` | Same — forwarded as events |
-| `workspace.getLeavesOfType` | Serialize leaf IDs, view types, file paths |
+| API                                    | Caveat                                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `vault.on('create'/'modify'/'delete')` | Now reliable **forwarded as events** over WS (originates inside Obsidian, where the watcher _is_ reliable; the unreliable case was external writes, which the bridge no longer depends on) |
+| `metadataCache.on('changed')`          | Same — forwarded as events                                                                                                                                                                 |
+| `workspace.getLeavesOfType`            | Serialize leaf IDs, view types, file paths                                                                                                                                                 |
 
 ### 11.3 Fundamentally unproxyable (out of scope)
 
-| API | Reason |
-|-----|--------|
-| `Editor` (CodeMirror) | Live DOM, cursor, selection — not serializable |
-| `WorkspaceLeaf.setViewState` | Tied to live DOM and View instances |
+| API                                     | Reason                                                                                 |
+| --------------------------------------- | -------------------------------------------------------------------------------------- |
+| `Editor` (CodeMirror)                   | Live DOM, cursor, selection — not serializable                                         |
+| `WorkspaceLeaf.setViewState`            | Tied to live DOM and View instances                                                    |
 | `MarkdownView` / any View (full render) | DOM rendering pipeline (Layer-3 `register_view` in Phase 2 addresses a bounded subset) |
-| `keymap/Scope/hotkeyManager` | Keyboard events, in-process only |
-| `containerEl` / DOM elements | HTML elements |
-| `secretStorage` | OS-level secure storage |
+| `keymap/Scope/hotkeyManager`            | Keyboard events, in-process only                                                       |
+| `containerEl` / DOM elements            | HTML elements                                                                          |
+| `secretStorage`                         | OS-level secure storage                                                                |
 
 ### 11.4 Conclusion
 
@@ -698,9 +728,15 @@ pi.registerTool({
   description: "Execute a Dataview query",
   parameters: Type.Object({ query: Type.String() }),
   async execute(toolCallId, params) {
-    return { content: [{ type: "text", text:
-      `Use obsidian.call_plugin with pluginId: "dataview", method: "query", args: ["${params.query}"]` }] };
-  }
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Use obsidian.call_plugin with pluginId: "dataview", method: "query", args: ["${params.query}"]`,
+        },
+      ],
+    };
+  },
 });
 ```
 
@@ -830,17 +866,17 @@ packages/cost-tracker/  # @pi-obsidian/cost-tracker — status-bar cost widget (
    hands. Mitigated by §7 (loopback+token, whitelist, path safety, no-`eval`
    stance, confirmation) but must be communicated loudly to users.
 2. **Obsidian API churn:** internal plugin APIs are not stability-guaranteed;
-  Phase 3 inter-plugin calls can break on Obsidian upgrades. The bridge is
-  insulated; Layer 3 plugins absorb this risk.
+   Phase 3 inter-plugin calls can break on Obsidian upgrades. The bridge is
+   insulated; Layer 3 plugins absorb this risk.
 3. **WS lifecycle:** port binding, lockfile staleness (orphaned lockfile after a
-  crash), and reconnection. Mitigated by the `@ldelossa/pi-ide`-proven lockfile +
-  sticky-reconnect pattern; stale-lockfile detection by PID liveness is a small
-  added check.
+   crash), and reconnection. Mitigated by the `@ldelossa/pi-ide`-proven lockfile +
+   sticky-reconnect pattern; stale-lockfile detection by PID liveness is a small
+   added check.
 4. **Latency:** WS gives low, stable latency — adequate for interactive UI and
-  event pushes. Bulk ops remain Phase 3 (batch/streaming).
+   event pushes. Bulk ops remain Phase 3 (batch/streaming).
 5. **Maintenance surface:** Obsidian-side plugin + protocol + pi client is a
-  larger long-term commitment than a typical pi extension — but WS + lockfile is
-  a well-trodden pattern (reused from pi-ide), reducing novel surface.
+   larger long-term commitment than a typical pi extension — but WS + lockfile is
+   a well-trodden pattern (reused from pi-ide), reducing novel surface.
 
 ## 18. Success metrics (qualitative, v1)
 
