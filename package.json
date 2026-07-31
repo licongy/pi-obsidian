@@ -1,20 +1,41 @@
 {
   "name": "pi-obsidian",
   "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "A monorepo of independently-published pi extensions bridging the pi coding agent and Obsidian.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "licongy",
+  "packageManager": "pnpm@11.15.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/licongy/pi-obsidian.git"
+  },
+  "homepage": "https://github.com/licongy/pi-obsidian#readme",
+  "bugs": {
+    "url": "https://github.com/licongy/pi-obsidian/issues"
+  },
+  "keywords": [
+    "pi",
+    "obsidian",
+    "pi-extension",
+    "bridge",
+    "monorepo"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.15.1",
-      "onFail": "download"
-    }
-  },
-  "type": "module"
+  "devDependencies": {
+    "@changesets/cli": "^2.27.12",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
 }
