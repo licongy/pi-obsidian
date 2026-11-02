@@ -1,14 +1,14 @@
 # `@pi-obsidian/bridge`
 
 > **Status: Phase 1 (`0.1.0`).** The bridge provides a real-time, two-way
-> WebSocket channel between the pi agent and a resident Obsidian plugin: UI
+> WebSocket channel between the Pi agent and a resident Obsidian plugin: UI
 > actions, persistent status-bar widgets, an event push channel, a structured
 > `call_plugin` alternative to `eval`, and minimal vault operations. See
 > [`docs/bridge.md`](../../docs/bridge.md) for the full design.
 
-`@pi-obsidian/bridge` is a [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) extension that gives the pi agent (and other pi extensions built on top) a **real-time, two-way channel** into a **long-lived Obsidian plugin**: fire UI notifications, hold persistent widgets, open notes, run commands, push events back to pi, and call Obsidian plugin APIs through a structured, whitelisted proxy.
+`@pi-obsidian/bridge` is a [pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) extension that gives the Pi agent (and other Pi extensions built on top) a **real-time, two-way channel** into a **long-lived Obsidian plugin**: fire UI notifications, hold persistent widgets, open notes, run commands, push events back to pi, and call Obsidian plugin APIs through a structured, whitelisted proxy.
 
-The bridge is **infrastructure**: control stays on the pi side, persistent UI and execution stay on the Obsidian side, and a loopback WebSocket carrying JSON-RPC 2.0 connects the two with no perceptible latency.
+The bridge is **infrastructure**: control stays on the Pi side, persistent UI and execution stay on the Obsidian side, and a loopback WebSocket carrying JSON-RPC 2.0 connects the two with no perceptible latency.
 
 ## What makes this different from CLI+eval packages
 
@@ -63,7 +63,7 @@ For heavy vault work, pair with [`@bacnh85/pi-obsidian`](https://www.npmjs.com/p
 
 ### Event channel
 
-The bridge pushes events from Obsidian to pi in real time. Layer 3 extensions subscribe via the exported client:
+The bridge pushes events from Obsidian to Pi in real time. Layer 3 extensions subscribe via the exported client:
 
 ```typescript
 import { createBridgeClient } from "@pi-obsidian/bridge/client";
@@ -141,7 +141,7 @@ To enable `call_plugin`:
 
 ## Built-in bridge panel
 
-When the user has no terminal open (or Claudian UI is unavailable), click the dice ribbon icon in Obsidian to open the **pi-obsidian panel**. It shows bridge status and has a text input to send messages to the pi agent (pushed as `view_action` events).
+When the user has no terminal open (or Claudian UI is unavailable), click the dice ribbon icon in Obsidian to open the **pi-obsidian panel**. It shows bridge status and has a text input to send messages to the Pi agent (pushed as `view_action` events).
 
 ## Debug
 
